@@ -20,6 +20,16 @@
 
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  /* ---- Vercel Web Analytics custom events ----
+     window.va is stubbed in index.html, so queued calls flush once the
+     insights script loads. Never send the visitor's name or free-text
+     details — only which service was picked. */
+  function track(name, data) {
+    if (typeof window.va === 'function') {
+      window.va('event', { name: name, data: data || {} });
+    }
+  }
+
   /* ---- Build the message ---- */
   function buildMessage() {
     var name = nameInput.value.trim();
@@ -83,6 +93,12 @@
 
   /* ---- Open WhatsApp ---- */
   function openWhatsApp() {
+    track('whatsapp_click', {
+      service: serviceInput.value || 'unspecified',
+      area_given: areaInput.value.trim() ? 'yes' : 'no',
+      details_given: detailsInput.value.trim() ? 'yes' : 'no'
+    });
+
     var url =
       'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(buildMessage());
     window.open(url, '_blank', 'noopener');
@@ -122,6 +138,7 @@
 
       setError(serviceInput, '');
       updatePreview();
+      track('service_select', { service: serviceInput.value || wanted });
 
       document.getElementById('enquire').scrollIntoView({ behavior: 'smooth', block: 'start' });
       window.setTimeout(function () {
